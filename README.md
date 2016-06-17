@@ -1,5 +1,5 @@
 # Storage Spanning File Encryption
-This application is for encrypting files with AES and spanning the encrypted output directly across multiple Blu-Ray/DVD discs or flash drives. The encrypt script accepts a list of files and the size of the first storage destination. Before the encryption, the script determines which files it is able to fit onto the destination and outputs a list of files for the next storage destination.
+This application is for encrypting files with AES and spanning the encrypted files directly across multiple Blu-Ray/DVD discs or flash drives. The encrypt script accepts a list of files and the size of the first storage destination. Before the encryption, the script determines which files it is able to fit onto the destination and outputs a list of files for the next storage destination.
 
 Use the ```-h``` argument for help.
 
