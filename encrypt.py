@@ -173,7 +173,7 @@ else:
 
 	key = passphrase_to_key(passphrase)
 
-iv = get_random_bytes(16)
+iv = get_random_bytes(8)
 header += iv
 header_size = len(header)
 
