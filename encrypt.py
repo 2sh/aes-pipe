@@ -31,9 +31,10 @@ from subprocess import Popen, PIPE
 from getpass import getpass
 
 class FileEncrypter:
-	def __init__(self, out_fd, key, iv, chunk_size=20*512):
-		self.encrypter = AES.new(key, AES.MODE_CBC, iv)
+	def __init__(self, out_fd, key, iv):
 		self.out_fd = out_fd
+		ctr = Counter.new(64, prefix=iv)
+		self.encrypter = AES.new(key, AES.MODE_CTR, counter=ctr)
 
 	def write(self, data):
 		self.out_fd.write(self.encrypter.encrypt(data))
@@ -172,7 +173,7 @@ else:
 
 	key = passphrase_to_key(passphrase)
 
-iv = get_random_bytes(AES.block_size)
+iv = get_random_bytes(16)
 header += iv
 header_size = len(header)
 
@@ -189,6 +190,7 @@ if files_next_time:
 sys.stdout.buffer.write(header)
 
 encrypter = FileEncrypter(sys.stdout.buffer, key, iv)
+
 tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8", format=tarfile.GNU_FORMAT, bufsize=20*512)
 for f in files:
 	tar.add(f[0], recursive=False)
