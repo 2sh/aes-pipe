@@ -82,7 +82,7 @@ if args.key_command:
 else:
 	key = hashlib.sha256(getpass("Enter a passphrase: ").encode('utf-8')).digest()
 
-iv = data_in.read(16)
+iv = data_in.read(8)
 decrypter = FileDecrypter(data_in, key, iv)
 
 if args.output_destination:
