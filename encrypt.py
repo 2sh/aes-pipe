@@ -144,8 +144,7 @@ if args.key_command:
 		exit()
 	data_length = len(data)
 	if data_length:
-		data_length = bytes([(data_length>>(8*i))&0xff for i in range(7,-1,-1)])
-		header += data_length + data
+		header += data_length.to_bytes(8, byteorder="big") + data
 else:
 	while True:
 		passphrase = getpass("Enter a passphrase: ")
