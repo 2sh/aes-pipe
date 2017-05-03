@@ -49,7 +49,7 @@ parser.add_argument("-i",
 parser.add_argument("-o",
 	dest="output_destination",
 	metavar="DEST_PATH",
-	help="Output destination for decrypted data. Default is to output a TAR file to STDOUT.")
+	help="Output destination of the decrypted files. Default is to output a UTF-8 encoded TAR file to STDOUT.")
 
 parser.add_argument("-k",
 	dest="key_command",
