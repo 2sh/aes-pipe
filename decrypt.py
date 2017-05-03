@@ -51,12 +51,14 @@ parser.add_argument("-i",
 parser.add_argument("-o",
 	dest="output_destination",
 	metavar="DEST_PATH",
-	help="Output destination of the decrypted files. Default is to output a UTF-8 encoded TAR file to STDOUT.")
+	help="Output destination of the decrypted files. "
+		"Default is to output a UTF-8 encoded TAR file to STDOUT.")
 
 parser.add_argument("-k",
 	dest="key_command",
 	metavar="COMMAND",
-	help="The command to retrieve the encryption key, e.g. gpg. Default is to prompt for a passphrase.")
+	help="The command to retrieve the encryption key, e.g. gpg. "
+		"Default is to prompt for a passphrase.")
 	
 parser.add_argument("-p",
 	dest="pass_header",
@@ -75,19 +77,22 @@ if args.key_command:
 		header_content = data_in.read(length)
 	else:
 		header_content = None
-	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+	sp = Popen(args.key_command, shell=True,
+		stdin=PIPE, stdout=PIPE, stderr=PIPE)
 	key, err = sp.communicate(input=header_content)
 	if sp.returncode != 0:
 		print(err.decode(encoding='UTF-8'), file=sys.stderr)
 		exit()
 else:
-	key = hashlib.sha256(getpass("Enter a passphrase: ").encode('utf-8')).digest()
+	key = hashlib.sha256(
+		getpass("Enter a passphrase: ").encode('utf-8')).digest()
 
 iv = data_in.read(8)
 decrypter = FileDecrypter(data_in, key, iv)
 
 if args.output_destination:
-	tar = tarfile.open(mode="r|", fileobj=decrypter, encoding="utf-8", format=tarfile.GNU_FORMAT, bufsize=20*512)
+	tar = tarfile.open(mode="r|", fileobj=decrypter, encoding="utf-8",
+		format=tarfile.GNU_FORMAT, bufsize=20*512)
 	tar.extractall(args.output_destination)
 else:
 	while True:
