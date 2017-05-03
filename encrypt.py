@@ -68,7 +68,7 @@ prefixes = {
 	"y": 8,
 }
 
-def size(value):
+def storage_size(value):
 	value = value.lower()
 	if not value:
 		raise Exception("Size not given.")
@@ -86,7 +86,7 @@ parser = argparse.ArgumentParser(description="Encrypter")
 parser.add_argument("filelist",
 	help="A list of all the individual files and folders to be encrypted.")
 parser.add_argument("size",
-	type=size,
+	type=storage_size,
 	help="The size of the destination storage")
 parser.add_argument("-l",
 	dest="filelist_dest",
@@ -189,7 +189,7 @@ sys.stdout.buffer.write(header)
 
 encrypter = Encrypter(key, iv, sys.stdout.buffer)
 tar = tarfile.open(mode="w|", fileobj=encrypter, encoding=encoding, format=tarfile.GNU_FORMAT, bufsize=20*512)
-for file in files:
-	tar.add(file[0], recursive=False)
+for f in files:
+	tar.add(f[0], recursive=False)
 
 tar.close()
