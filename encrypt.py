@@ -52,14 +52,16 @@ def calculate_tar_file_size(path):
 
 	if os.path.isfile(path):
 		size += os.path.getsize(path)
-		size = 512 + int(512 * math.ceil(size/512)) # tar: 512 byte header + data rounded up to a multiple of 512 bytes
+		size = 512 + int(512 * math.ceil(size/512))
+		# tar: 512 byte header + data rounded up to a multiple of 512 bytes
 		return path, size, 0
 	else:
 		size += 512 # tar: only the 512 byte header
 		return path, size, 1
 
 def calculate_tar_size(data_size, bufsize=20*512):
-	# tar: "The end of an archive is marked by at least two consecutive zero-filled records"
+	# tar: "The end of an archive is marked by at least
+	# two consecutive zero-filled records"
 	return int(bufsize * math.ceil((data_size + 512*2)/bufsize))
 
 def fit_files_into_tar(files, size):
@@ -114,7 +116,8 @@ parser.add_argument("size",
 parser.add_argument("-l",
 	dest="filelist_dest",
 	metavar="PATH",
-	help="The destination file path for the file list of files that did not fit within the size limit.")
+	help="The destination file path for the file list of files that did not "
+		"fit within the size limit.")
 parser.add_argument("-i",
 	dest="ignore_errors",
 	action='store_true',
@@ -122,7 +125,9 @@ parser.add_argument("-i",
 parser.add_argument("-k",
 	dest="key_command",
 	metavar="COMMAND",
-	help="Generates a 32-byte encryption key and pipes it into the specified command, e.g. gpg or dd. Otherwise, a passphrase is requested through a prompt.")
+	help="Generates a 32-byte encryption key and pipes it into "
+		"the specified command, e.g. gpg or dd. Otherwise, "
+		"a passphrase is requested through a prompt.")
 args = parser.parse_args()
 
 errors = False
@@ -142,7 +147,8 @@ for path in open(filelist_source):
 	except Exception as e:
 		print(e)
 		errors = True
-files.sort(key=lambda f: (f[2], f[1]), reverse=True) # All directories and such at the start and then files from largest to smallest
+files.sort(key=lambda f: (f[2], f[1]), reverse=True)
+# All directories and such at the start and then files from largest to smallest
 
 if not args.ignore_errors and errors:
 	while 1:
@@ -168,7 +174,8 @@ else:
 		if passphrase == getpass("Enter the same passphrase again: "):
 			break
 		else:
-			print("The passphrases did not match. Try again.\n", file=sys.stderr)
+			print("The passphrases did not match. Try again.",
+				file=sys.stderr)
 
 	key = passphrase_to_key(passphrase)
 
@@ -176,14 +183,17 @@ iv = get_random_bytes(8)
 header += iv
 header_size = len(header)
 
-files, files_next_time, files_size = fit_files_into_tar(files, args.size-header_size)
+files, files_next_time, files_size = fit_files_into_tar(
+	files, args.size-header_size)
 
 tar_size = calculate_tar_size(files_size)
-sys.stderr.write("Output: {}b\n".format(header_size+tar_size))
+print("Output: {}b".format(header_size+tar_size), file=sys.stderr)
 
 if files_next_time:
 	if not args.filelist_dest:
-		print("Filelist destination needs to be specified as the amount of files to be stored exceeds the destination storage size.", file=sys.stderr)
+		print("Filelist destination needs to be specified as the amount of "
+			"files to be stored exceeds the destination storage size.",
+			file=sys.stderr)
 		exit()
 	with open(args.filelist_dest, "w") as filelist:
 		for f in files_next_time:
@@ -193,7 +203,8 @@ sys.stdout.buffer.write(header)
 
 encrypter = FileEncrypter(sys.stdout.buffer, key, iv)
 
-tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8", format=tarfile.GNU_FORMAT, bufsize=20*512)
+tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8",
+	format=tarfile.GNU_FORMAT, bufsize=20*512)
 for f in files:
 	tar.add(f[0], recursive=False)
 
