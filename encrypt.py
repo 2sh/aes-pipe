@@ -92,10 +92,6 @@ parser.add_argument("-l",
 	dest="filelist_dest",
 	metavar="PATH",
 	help="The destination file path for the file list of files that did not fit within the size limit.")
-parser.add_argument("-e",
-	dest="encoding",
-	metavar="ENCODING",
-	help="The TAR encoding to use. Default is 'utf-8'.")
 parser.add_argument("-i",
 	dest="ignore_errors",
 	action='store_true',
@@ -112,11 +108,6 @@ if args.filelist == "-":
 	filelist_source = sys.stdin.fileno()
 else:
 	filelist_source = args.filelist
-
-if args.encoding:
-	encoding = args.encoding
-else:
-	encoding = "utf-8"
 
 files = []
 for path in filelist_source:
@@ -188,7 +179,7 @@ if len(files_next_time):
 sys.stdout.buffer.write(header)
 
 encrypter = Encrypter(key, iv, sys.stdout.buffer)
-tar = tarfile.open(mode="w|", fileobj=encrypter, encoding=encoding, format=tarfile.GNU_FORMAT, bufsize=20*512)
+tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8", format=tarfile.GNU_FORMAT, bufsize=20*512)
 for f in files:
 	tar.add(f[0], recursive=False)
 

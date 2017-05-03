@@ -43,11 +43,6 @@ class Decrypter:
 			return data
 
 parser = argparse.ArgumentParser(description="Decrypter")
-parser.add_argument("-e",
-	dest="encoding",
-	metavar="ENCODING",
-	help="The TAR encoding to use. Default is 'utf-8'.")
-
 parser.add_argument("-i",
 	dest="input_source",
 	metavar="SOURCE",
@@ -67,11 +62,6 @@ parser.add_argument("-p",
 	action='store_true',
 	help="Set to pass header to key command")
 args = parser.parse_args()
-
-if args.encoding:
-	encoding = args.encoding
-else:
-	encoding = "utf-8"
 
 if args.input_source:
 	data_in = open(args.input_source, "rb")
@@ -98,7 +88,7 @@ else:
 decrypter = Decrypter(key, iv, data_in)
 
 if args.output_destination:
-	tar = tarfile.open(mode="r|", fileobj=decrypter, encoding=encoding, format=tarfile.GNU_FORMAT, bufsize=20*512)
+	tar = tarfile.open(mode="r|", fileobj=decrypter, encoding="utf-8", format=tarfile.GNU_FORMAT, bufsize=20*512)
 	tar.extractall(args.output_destination)
 else:
 	while True:
