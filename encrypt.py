@@ -38,7 +38,7 @@ class Encrypter:
 	def write(self, data):
 		self.out_fd.write(self.encrypter.encrypt(data))
 
-def calculate_tar_size(path):
+def calculate_tar_file_size(path):
 	if not os.path.lexists(path):
 		raise Exception("{} does not exist")
 	
@@ -120,7 +120,7 @@ for path in filelist_source:
 	if not path:
 		continue
 	try:
-		files.append(calculate_tar_size(path))
+		files.append(calculate_tar_file_size(path))
 	except Exception as e:
 		print(e)
 		errors = True
