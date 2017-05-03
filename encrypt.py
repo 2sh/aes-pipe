@@ -41,7 +41,7 @@ class FileEncrypter:
 
 def calculate_tar_file_size(path):
 	if not os.path.lexists(path):
-		raise Exception("{} does not exist")
+		raise Exception("{} does not exist".format(path))
 	
 	path_size = sys.getsizeof(path)
 	if path_size > 64: # GNU tar path size workaround
