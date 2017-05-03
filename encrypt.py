@@ -133,7 +133,7 @@ else:
 	filelist_source = args.filelist
 
 files = []
-for path in filelist_source:
+for path in open(filelist_source):
 	path = path.strip()
 	if not path:
 		continue
