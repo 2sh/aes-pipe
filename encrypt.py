@@ -135,18 +135,17 @@ if not args.ignore_errors and errors:
 			exit()
 
 header = b""
-iv = get_random_bytes(AES.block_size)
 if args.key_command:
 	key = create_random_key()
 	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-	header_content, err = sp.communicate(iv + key)
+	data, err = sp.communicate(key)
 	if sp.returncode != 0:
 		print(err.decode(encoding='UTF-8'), file=sys.stderr)
 		exit()
-	data_length = len(header_content)
+	data_length = len(data)
 	if data_length:
 		data_length = bytes([(data_length>>(8*i))&0xff for i in range(7,-1,-1)])
-		header = data_length + header_content
+		header += data_length + data
 else:
 	while True:
 		passphrase = getpass("Enter a passphrase: ")
@@ -156,7 +155,9 @@ else:
 			print("The passphrases did not match. Try again.\n", file=sys.stderr)
 
 	key = passphrase_to_key(passphrase)
-	header = iv
+
+iv = get_random_bytes(AES.block_size)
+header += iv
 
 header_size = len(header)
 
