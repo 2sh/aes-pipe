@@ -56,6 +56,10 @@ def calculate_tar_file_size(path):
 		size += 512 # tar: only the 512 byte header
 		return path, size, 1
 
+def calculate_tar_size(data_size, bufsize=20*512):
+	# tar: "The end of an archive is marked by at least two consecutive zero-filled records"
+	return int(bufsize * math.ceil((data_size + 512*2)/bufsize))
+
 def passphrase_to_key(passphrase):
 	return hashlib.sha256(passphrase.encode('utf-8')).digest()
 
@@ -157,27 +161,25 @@ else:
 
 iv = get_random_bytes(AES.block_size)
 header += iv
-
 header_size = len(header)
 
-files_next_time = []
-dest_size = 512*2 # tar: "The end of an archive is marked by at least two consecutive zero-filled records"
-i = 0
-while i < len(files):
-	size_test = int(10240 * math.ceil((dest_size + files[i][1])/10240)) + header_size # Tarfile buffersize blocks + header size
+files_size = 0
+for i, f in enumerate(files):
+	size_test = calculate_tar_size(files_size + f[1]) + header_size
 	if size_test > args.size:
-		files_next_time.append(files.pop(i))
-	else:
-		dest_size += files[i][1]
-		i += 1
+		break
+	files_size += f[1]
 
-if len(files_next_time):
+files_next_time = files[i:]
+files = files[:i]
+
+if files_next_time:
 	if not args.filelist_dest:
 		print("Filelist destination needs to be specified as the amount of files to be stored exceeds the destination storage size.", file=sys.stderr)
 		exit()
 	with open(args.filelist_dest, "w") as filelist:
-		for file in files_next_time:
-			filelist.write(file[0] + "\n")
+		for f in files_next_time:
+			filelist.write(f[0] + "\n")
 
 sys.stdout.buffer.write(header)
 
