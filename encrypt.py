@@ -60,6 +60,19 @@ def calculate_tar_size(data_size, bufsize=20*512):
 	# tar: "The end of an archive is marked by at least two consecutive zero-filled records"
 	return int(bufsize * math.ceil((data_size + 512*2)/bufsize))
 
+def fit_files_into_tar(files, size):
+	files_size = 0
+	tar = []
+	rest = []
+	for f in files:
+		split_index += 1
+		if calculate_tar_size(files_size + f[1]) > size:
+			rest.append(f)
+		else:
+			files_size += f[1]
+			tar.append(f)
+	return tar, rest
+
 def passphrase_to_key(passphrase):
 	return hashlib.sha256(passphrase.encode('utf-8')).digest()
 
@@ -163,15 +176,7 @@ iv = get_random_bytes(AES.block_size)
 header += iv
 header_size = len(header)
 
-files_size = 0
-for i, f in enumerate(files):
-	size_test = calculate_tar_size(files_size + f[1]) + header_size
-	if size_test > args.size:
-		break
-	files_size += f[1]
-
-files_next_time = files[i:]
-files = files[:i]
+files, files_next_time = fit_files_into_tar(files, args.size-header_size)
 
 if files_next_time:
 	if not args.filelist_dest:
