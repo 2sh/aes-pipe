@@ -26,7 +26,6 @@ import hashlib
 from Crypto.Cipher import AES
 
 from io import BufferedWriter, BytesIO
-import shlex
 from subprocess import Popen, PIPE
 from getpass import getpass
 
@@ -74,7 +73,7 @@ if args.key_command:
 		header_content = data_in.read(length)
 	else:
 		header_content = None
-	sp = Popen(shlex.split(args.key_command), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 	data, err = sp.communicate(input=header_content)
 	if sp.returncode != 0:
 		print(err.decode(encoding='UTF-8'), file=sys.stderr)
