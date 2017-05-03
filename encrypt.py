@@ -56,6 +56,12 @@ def calculate_tar_size(path):
 		size += 512 # tar: only the 512 byte header
 		return path, size, 1
 
+def passphrase_to_key(passphrase):
+	return hashlib.sha256(passphrase.encode('utf-8')).digest()
+
+def create_random_key():
+	return get_random_bytes(32)
+
 prefixes = {
 	"k": 1,
 	"m": 2,
@@ -131,7 +137,7 @@ if not args.ignore_errors and errors:
 header = b""
 iv = get_random_bytes(AES.block_size)
 if args.key_command:
-	key = get_random_bytes(32);
+	key = create_random_key()
 	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 	header_content, err = sp.communicate(iv + key)
 	if sp.returncode != 0:
@@ -149,7 +155,7 @@ else:
 		else:
 			print("The passphrases did not match. Try again.\n", file=sys.stderr)
 
-	key = hashlib.sha256(passphrase.encode('utf-8')).digest()
+	key = passphrase_to_key(passphrase)
 	header = iv
 
 header_size = len(header)
