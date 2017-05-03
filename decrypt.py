@@ -24,6 +24,7 @@ import tarfile
 
 import hashlib
 from Crypto.Cipher import AES
+from Crypto.Util import Counter
 
 from subprocess import Popen, PIPE
 from getpass import getpass
