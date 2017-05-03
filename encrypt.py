@@ -27,7 +27,6 @@ import hashlib
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 
-import shlex
 from subprocess import Popen, PIPE
 from getpass import getpass
 
@@ -133,7 +132,7 @@ header = b""
 iv = get_random_bytes(AES.block_size)
 if args.key_command:
 	key = get_random_bytes(32);
-	sp = Popen(shlex.split(args.key_command), stdin=PIPE, stdout=PIPE, stderr=PIPE)
+	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 	header_content, err = sp.communicate(iv + key)
 	if sp.returncode != 0:
 		print(err.decode(encoding='UTF-8'), file=sys.stderr)
