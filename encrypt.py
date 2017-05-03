@@ -142,7 +142,7 @@ for path in filelist_source:
 	except Exception as e:
 		print(e)
 		errors = True
-files.sort(lambda f: (f[2], f[1]), reverse=True) # All directories and such at the start and then files from largest to smallest
+files.sort(key=lambda f: (f[2], f[1]), reverse=True) # All directories and such at the start and then files from largest to smallest
 
 if not args.ignore_errors and errors:
 	while 1:
