@@ -72,7 +72,7 @@ def fit_files_into_tar(files, size):
 		else:
 			files_size += f[1]
 			tar.append(f)
-	return tar, rest
+	return tar, rest, files_size
 
 def passphrase_to_key(passphrase):
 	return hashlib.sha256(passphrase.encode('utf-8')).digest()
@@ -176,7 +176,10 @@ iv = get_random_bytes(8)
 header += iv
 header_size = len(header)
 
-files, files_next_time = fit_files_into_tar(files, args.size-header_size)
+files, files_next_time, files_size = fit_files_into_tar(files, args.size-header_size)
+
+tar_size = calculate_tar_size(files_size)
+sys.stderr.write("Output: {}b\n".format(header_size+tar_size))
 
 if files_next_time:
 	if not args.filelist_dest:
