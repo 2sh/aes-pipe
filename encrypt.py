@@ -30,8 +30,8 @@ from Crypto.Cipher import AES
 from subprocess import Popen, PIPE
 from getpass import getpass
 
-class Encrypter:
-	def __init__(self, key, iv, out_fd, chunk_size=20*512):
+class FileEncrypter:
+	def __init__(self, out_fd, key, iv, chunk_size=20*512):
 		self.encrypter = AES.new(key, AES.MODE_CBC, iv)
 		self.out_fd = out_fd
 
@@ -188,7 +188,7 @@ if files_next_time:
 
 sys.stdout.buffer.write(header)
 
-encrypter = Encrypter(key, iv, sys.stdout.buffer)
+encrypter = FileEncrypter(sys.stdout.buffer, key, iv)
 tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8", format=tarfile.GNU_FORMAT, bufsize=20*512)
 for f in files:
 	tar.add(f[0], recursive=False)

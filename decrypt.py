@@ -28,8 +28,8 @@ from Crypto.Cipher import AES
 from subprocess import Popen, PIPE
 from getpass import getpass
 
-class Decrypter:
-	def __init__(self, key, iv, in_fd):
+class FileDecrypter:
+	def __init__(self, in_fd, key, iv):
 		self.in_fd = in_fd
 		self.decrypter = AES.new(key, AES.MODE_CBC, iv)
 
@@ -81,7 +81,7 @@ else:
 	key = hashlib.sha256(getpass("Enter a passphrase: ").encode('utf-8')).digest()
 
 iv = data_in.read(AES.block_size)
-decrypter = Decrypter(key, iv, data_in)
+decrypter = FileDecrypter(key, iv, data_in)
 
 if args.output_destination:
 	tar = tarfile.open(mode="r|", fileobj=decrypter, encoding="utf-8", format=tarfile.GNU_FORMAT, bufsize=20*512)
