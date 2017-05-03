@@ -31,12 +31,14 @@ from getpass import getpass
 class FileDecrypter:
 	def __init__(self, in_fd, key, iv):
 		self.in_fd = in_fd
-		self.decrypter = AES.new(key, AES.MODE_CBC, iv)
+		
+		ctr = Counter.new(64, prefix=iv)
+		self.cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
 
 	def read(self, bufsize=20*512):
 		data = self.in_fd.read(bufsize)
 		if data:
-			return self.decrypter.decrypt(data)
+			return self.cipher.decrypt(data)
 		else:
 			return data
 
@@ -80,8 +82,8 @@ if args.key_command:
 else:
 	key = hashlib.sha256(getpass("Enter a passphrase: ").encode('utf-8')).digest()
 
-iv = data_in.read(AES.block_size)
-decrypter = FileDecrypter(key, iv, data_in)
+iv = data_in.read(16)
+decrypter = FileDecrypter(data_in, key, iv)
 
 if args.output_destination:
 	tar = tarfile.open(mode="r|", fileobj=decrypter, encoding="utf-8", format=tarfile.GNU_FORMAT, bufsize=20*512)
