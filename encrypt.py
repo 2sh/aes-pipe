@@ -155,10 +155,9 @@ if not args.ignore_errors and errors:
 header = b""
 if args.key_command:
 	key = create_random_key()
-	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-	data, err = sp.communicate(key)
+	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE)
+	data, _ = sp.communicate(key)
 	if sp.returncode != 0:
-		print(err.decode(encoding='UTF-8'), file=sys.stderr)
 		exit()
 	data_length = len(data)
 	if data_length:
