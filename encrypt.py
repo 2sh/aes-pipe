@@ -26,6 +26,7 @@ import math
 import hashlib
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
+from Crypto.Util import Counter
 
 from subprocess import Popen, PIPE
 from getpass import getpass
