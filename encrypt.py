@@ -66,7 +66,6 @@ def fit_files_into_tar(files, size):
 	tar = []
 	rest = []
 	for f in files:
-		split_index += 1
 		if calculate_tar_size(files_size + f[1]) > size:
 			rest.append(f)
 		else:
