@@ -39,6 +39,24 @@ class Encrypter:
 	def write(self, data):
 		self.out_fd.write(self.encrypter.encrypt(data))
 
+def calculate_tar_size(path):
+	if not os.path.lexists(path):
+		raise Exception("{} does not exist")
+	
+	path_size = sys.getsizeof(path)
+	if path_size > 64: # GNU tar path size workaround
+		size = 512 + int(512 * math.ceil(path_size/512))
+	else:
+		size = 0
+
+	if os.path.isfile(path):
+		size += os.path.getsize(path)
+		size = 512 + int(512 * math.ceil(size/512)) # tar: 512 byte header + data rounded up to a multiple of 512 bytes
+		return path, size, 0
+	else:
+		size += 512 # tar: only the 512 byte header
+		return path, size, 1
+
 prefixes = {
 	"k": 1,
 	"m": 2,
@@ -101,30 +119,16 @@ else:
 	encoding = "utf-8"
 
 files = []
-other = []
-with open(filelist_source, "r") as source:
-	for path in source:
-		if path[-1] == "\n":
-			path = path[:-1]
-
-		if not os.path.lexists(path):
-			print(path, "does not exist.", file=sys.stderr)
-			errors = True
-			continue
-
-		path_size = sys.getsizeof(path)
-		if path_size > 64: # GNU tar path size workaround
-			size = 512 + int(512 * math.ceil(path_size/512))
-		else:
-			size = 0
-
-		if os.path.isfile(path):
-			size += os.path.getsize(path)
-			size = 512 + int(512 * math.ceil(size/512)) # tar: 512 byte header + data rounded up to a multiple of 512 bytes
-			files.append((path, size))
-		else:
-			size += 512 # tar: only the 512 byte header
-			other.append((path, size))
+for path in filelist_source:
+	path = path.strip()
+	if not path:
+		continue
+	try:
+		files.append(calculate_tar_size(path))
+	except Exception as e:
+		print(e)
+		errors = True
+files.sort(lambda f: (f[2], f[1]), reverse=True) # All directories and such at the start and then files from largest to smallest
 
 if not args.ignore_errors and errors:
 	while 1:
@@ -159,8 +163,6 @@ else:
 	header = iv
 
 header_size = len(header)
-
-files = other + sorted(files, key=lambda f: f[1], reverse=True) # All directories and such at the start and then files from largest to smallest
 
 files_next_time = []
 dest_size = 512*2 # tar: "The end of an archive is marked by at least two consecutive zero-filled records"
