@@ -171,8 +171,6 @@ while i < len(files):
 		dest_size += files[i][1]
 		i += 1
 
-dest_size = int(10240 * math.ceil(dest_size/10240)) + header_size
-
 if len(files_next_time):
 	if not args.filelist_dest:
 		print("Filelist destination needs to be specified as the amount of files to be stored exceeds the destination storage size.", file=sys.stderr)
