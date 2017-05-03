@@ -74,16 +74,14 @@ if args.key_command:
 	else:
 		header_content = None
 	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-	data, err = sp.communicate(input=header_content)
+	key, err = sp.communicate(input=header_content)
 	if sp.returncode != 0:
 		print(err.decode(encoding='UTF-8'), file=sys.stderr)
 		exit()
-	iv = data[:AES.block_size]
-	key = data[AES.block_size:]
 else:
 	key = hashlib.sha256(getpass("Enter a passphrase: ").encode('utf-8')).digest()
-	iv = data_in.read(AES.block_size)
 
+iv = data_in.read(AES.block_size)
 decrypter = Decrypter(key, iv, data_in)
 
 if args.output_destination:
