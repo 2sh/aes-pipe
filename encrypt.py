@@ -110,7 +110,8 @@ def storage_size(value):
 parser = argparse.ArgumentParser(description="Encrypter")
 parser.add_argument("filelist",
 	help="A list of all the individual files and folders to be encrypted.")
-parser.add_argument("size",
+parser.add_argument("-s",
+	dest="size",
 	type=storage_size,
 	help="The size of the destination storage")
 parser.add_argument("-l",
@@ -183,8 +184,12 @@ iv = get_random_bytes(8)
 header += iv
 header_size = len(header)
 
-files, files_next_time, files_size = fit_files_into_tar(
-	files, args.size-header_size)
+if args.size:
+	files, files_next_time, files_size = fit_files_into_tar(
+		files, args.size-header_size)
+else:
+	files_next_time = []
+	files_size = sum(f[1] for f in files)
 
 tar_size = calculate_tar_size(files_size)
 print("Output: {}b".format(header_size+tar_size), file=sys.stderr)

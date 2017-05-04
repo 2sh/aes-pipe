@@ -14,16 +14,16 @@ If no key command is specified, the user is prompted for a passphrase.
 ```
 find /path/photos/ > filelist
 
-python3 encrypt.py -l filelist_rest_1 filelist 25g | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
-python3 encrypt.py -l filelist_rest_2 filelist_rest_1 25g | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
-python3 encrypt.py -l filelist_rest_3 filelist_rest_2 25g | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 encrypt.py -l filelist_rest_1 -s 25g filelist | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 encrypt.py -l filelist_rest_2 -s 25g filelist_rest_1 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 encrypt.py -l filelist_rest_3 -s 25g filelist_rest_2 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
 ...
 ```
 As the rest filelist is output before the file encryption starts, multiple discs can be written at once.
 
 ### Encrypting files spanned across multiple usb sticks
 ```
-python3 encrypt.py -l filelist_rest_1 filelist 16g > /dev/sdX
+python3 encrypt.py -l filelist_rest_1 -s 16g filelist > /dev/sdX
 ...
 ```
 
@@ -38,7 +38,7 @@ Files will be output with their original paths.
 
 #### Prepend encrypted key to header of data output
 ```
-python3 encrypt.py -k "gpg --encrypt --recipient email@example.com" filelist 90g > testfile
+python3 encrypt.py -k "gpg --encrypt --recipient email@example.com" filelist > testfile
 ```
 #### Use encrypted key in header of data
 ```
@@ -48,7 +48,7 @@ This needs the ```-p``` argument.
 
 #### Output encrypted key file
 ```
-python3 encrypt.py -k "gpg --output encrypted_key.gpg --encrypt --recipient email@example.com" filelist 90g > testfile
+python3 encrypt.py -k "gpg --output encrypted_key.gpg --encrypt --recipient email@example.com" filelist > testfile
 ```
 
 #### Use encrypted key file
