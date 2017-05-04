@@ -192,7 +192,7 @@ else:
 	files_size = sum(f[1] for f in files)
 
 tar_size = calculate_tar_size(files_size)
-print("Output: {}b".format(header_size+tar_size), file=sys.stderr)
+print("Output: {} bytes".format(header_size+tar_size), file=sys.stderr)
 
 if files_next_time:
 	if not args.filelist_dest:
