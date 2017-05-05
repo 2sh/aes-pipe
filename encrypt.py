@@ -40,36 +40,36 @@ class FileEncrypter:
 	def write(self, data):
 		self.out_fd.write(self.encrypter.encrypt(data))
 
-def calculate_tar_file_size(path):
+def calculate_tar_file_size(path, blocksize=20*512):
 	if not os.path.lexists(path):
 		raise Exception("{} does not exist".format(path))
 	
 	path_size = sys.getsizeof(path)
 	if path_size > 64: # GNU tar path size workaround
-		size = 512 + int(512 * math.ceil(path_size/512))
+		size = 512 + 512 * int(math.ceil(path_size/512))
 	else:
 		size = 0
 
 	if os.path.isfile(path):
-		size += os.path.getsize(path)
-		size = 512 + int(512 * math.ceil(size/512))
-		# tar: 512 byte header + data rounded up to a multiple of 512 bytes
+		file_size = os.path.getsize(path)
+		# 512 byte header + data rounded up to a multiple of 512 bytes
+		size += 512 + 512 * int(math.ceil(file_size)/512)
 		return path, size, 0
 	else:
-		size += 512 # tar: only the 512 byte header
+		# only the 512 byte header
+		size += 512
 		return path, size, 1
 
-def calculate_tar_size(data_size, bufsize=20*512):
-	# tar: "The end of an archive is marked by at least
-	# two consecutive zero-filled records"
-	return int(bufsize * math.ceil((data_size + 512*2)/bufsize))
+def calculate_tar_size(data_size, blocking_factor=20):
+	# End of archive marked by two consecutive zero-filled records
+	return int((blocking_factor*512) * math.ceil((data_size + 512*2)/(blocking_factor*512)))
 
-def fit_files_into_tar(files, size):
+def fit_files_into_tar(files, size, blocking_factor=20):
 	files_size = 0
 	tar = []
 	rest = []
 	for f in files:
-		if calculate_tar_size(files_size + f[1]) > size:
+		if calculate_tar_size(files_size + f[1], blocking_factor) > size:
 			rest.append(f)
 		else:
 			files_size += f[1]
