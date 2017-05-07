@@ -62,7 +62,8 @@ def calculate_tar_file_size(path, blocksize=20*512):
 
 def calculate_tar_size(data_size, blocking_factor=20):
 	# End of archive marked by two consecutive zero-filled records
-	return int((blocking_factor*512) * math.ceil((data_size + 512*2)/(blocking_factor*512)))
+	return int((blocking_factor*512) *
+		math.ceil((data_size + 512*2)/(blocking_factor*512)))
 
 def fit_files_into_tar(files, size, blocking_factor=20):
 	files_size = 0
