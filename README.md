@@ -43,8 +43,8 @@ Files will be output with their original paths.
 
 ### Decrypt only specific files and directories
 This is useful for recovering deleted items from a backup.
-This will need to be run on each storage area across which the encrypted data
-was spanned until found.
+Until the items are found, this will need to be run on each storage area
+across which the encrypted data was spanned.
 ```
 python3 decrypt.py -i /dev/sdX | tar -C path/to/output/dir/ -xf - "path/of/dir in archive/" path/of/a_file.png
 ```
