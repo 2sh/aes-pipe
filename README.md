@@ -34,6 +34,16 @@ python3 decrypt.py -i /dev/sr0 -o /
 ```
 Files will be output with their original paths.
 
+### Decrypt only specific files and directories
+This is useful for recovering deleted items from a backup.
+This will need to be run on each storage area across which the encrypted data
+was spanned until found.
+```
+python3 decrypt.py -i /dev/sdX | tar -C path/to/output/dir/ -xf - "path/of/dir in archive/" path/of/a_file.png
+```
+Without the ```-o``` argument,
+the unencrypted tar archive data is output to STDOUT.
+
 ### Encryption of an auto generated key with a GPG public key
 
 #### Prepend encrypted key to header of data output
