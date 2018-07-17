@@ -31,6 +31,9 @@ from Crypto.Util import Counter
 from subprocess import Popen, PIPE
 from getpass import getpass
 
+from queue import Queue
+from threading import Thread
+
 class FileEncrypter:
 	def __init__(self, out_fd, key, iv):
 		self.out_fd = out_fd
@@ -65,23 +68,28 @@ def calculate_tar_size(data_size, blocking_factor=20):
 	return int((blocking_factor*512) *
 		math.ceil((data_size + 512*2)/(blocking_factor*512)))
 
-def fit_files_into_tar(files, size, blocking_factor=20):
-	files_size = 0
-	tar = []
-	rest = []
-	for f in files:
-		if calculate_tar_size(files_size + f[1], blocking_factor) > size:
-			rest.append(f)
-		else:
-			files_size += f[1]
-			tar.append(f)
-	return tar, rest, files_size
-
 def passphrase_to_key(passphrase):
 	return hashlib.sha256(passphrase.encode('utf-8')).digest()
 
 def create_random_key():
 	return get_random_bytes(32)
+
+class FilelistOutFile:
+	def __init__(self, path):
+		self.path = path
+		self.f = None
+	
+	def write(self, data):
+		if self.path:
+			if not self.f:
+				self.f = open(self.path, "w")
+			self.f.write(data)
+		else:
+			print(data, file=sys.stderr)
+	
+	def close(self):
+		if self.f:
+			self.f.close()
 
 prefixes = {
 	"k": 1,
@@ -111,54 +119,34 @@ def storage_size(value):
 parser = argparse.ArgumentParser(description="Encrypter")
 parser.add_argument("filelist",
 	help="A list of all the individual files and folders to be encrypted.")
+parser.add_argument("-l",
+	dest="filelist_out",
+	metavar="PATH",
+	help="File to which to write list of files that did not "
+		"fit within the size limit or failed.")
 parser.add_argument("-s",
 	dest="size",
 	type=storage_size,
 	help="The size of the destination storage")
-parser.add_argument("-l",
-	dest="filelist_dest",
-	metavar="PATH",
-	help="The destination file path for the file list of files that did not "
-		"fit within the size limit.")
-parser.add_argument("-i",
-	dest="ignore_errors",
+parser.add_argument("-u",
+	dest="no_underrun",
 	action='store_true',
-	help="Continue on non-critical errors (File does not exist).")
+	help="Attempt to prevent a buffer underrun. If the buffer is empty, "
+		"the output is halted and the paths of any remaining files "
+		"are written to the out file list.")
 parser.add_argument("-k",
 	dest="key_command",
 	metavar="COMMAND",
 	help="Generates a 32-byte encryption key and pipes it into "
 		"the specified command, e.g. gpg or dd. Otherwise, "
 		"a passphrase is requested through a prompt.")
-args = parser.parse_args()
 
-errors = False
+args = parser.parse_args()
 
 if args.filelist == "-":
 	filelist_source = sys.stdin.fileno()
 else:
 	filelist_source = args.filelist
-
-files = []
-for path in open(filelist_source):
-	path = path.strip()
-	if not path:
-		continue
-	try:
-		files.append(calculate_tar_file_size(path))
-	except Exception as e:
-		print(e)
-		errors = True
-files.sort(key=lambda f: (f[2], f[1]), reverse=True)
-# All directories and such at the start and then files from largest to smallest
-
-if not args.ignore_errors and errors:
-	while 1:
-		user_input = input("Continue? [y/n]: ").lower()
-		if user_input in ["y", "yes"]:
-			break
-		elif user_input in ["n", "no"]:
-			exit()
 
 header = b""
 if args.key_command:
@@ -186,32 +174,74 @@ header += iv
 header_size = len(header)
 
 if args.size:
-	files, files_next_time, files_size = fit_files_into_tar(
-		files, args.size-header_size)
+	max_tar_size = args.size-header_size
 else:
-	files_next_time = []
-	files_size = sum(f[1] for f in files)
-
-tar_size = calculate_tar_size(files_size)
-print("Output: {} bytes".format(header_size+tar_size), file=sys.stderr)
-
-if files_next_time:
-	if not args.filelist_dest:
-		print("Filelist destination needs to be specified as the amount of "
-			"files to be stored exceeds the destination storage size.",
-			file=sys.stderr)
-		exit()
-	with open(args.filelist_dest, "w") as filelist:
-		for f in files_next_time:
-			filelist.write(f[0] + "\n")
+	max_tar_size = None
 
 sys.stdout.buffer.write(header)
 
-encrypter = FileEncrypter(sys.stdout.buffer, key, iv)
+paths_to_write = Queue()
 
-tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8",
-	format=tarfile.GNU_FORMAT, bufsize=20*512)
-for f in files:
-	tar.add(f[0], recursive=False)
+def encrypt_files():
+	path = paths_to_write.get()
+	encrypter = FileEncrypter(sys.stdout.buffer, key, iv)
+	tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8",
+		format=tarfile.GNU_FORMAT, bufsize=20*512)
+	while 1:
+		tar.add(path, recursive=False)
+		path = paths_to_write.get()
+		if not path:
+			break
+	tar.close()
 
-tar.close()
+
+files_size = 0
+files_out = FilelistOutFile(args.filelist_out)
+
+t = Thread(target=encrypt_files)
+t.start()
+
+files_in = open(filelist_source, "r")
+
+halt = False
+while 1:
+	path = files_in.readline()
+	if not path:
+		break
+	path = path.rstrip("\n")
+	if not path:
+		continue
+	try:
+		f = calculate_tar_file_size(path)
+	except Exception as e:
+		files_out.write(f[0])
+		print(e, file=sys.stderr)
+		continue
+	
+	if args.no_underrun:
+		halt = paths_to_write.empty()
+	
+	if(halt or (max_tar_size and
+			calculate_tar_size(files_size + f[1]) > max_tar_size)):
+		files_out.write(f[0] + "\n")
+	else:
+		paths_to_write.put(f[0])
+		files_size += f[1]
+	
+	if halt:
+		break
+
+paths_to_write.put(None)
+
+while 1:
+	line = files_in.readline()
+	if not line:
+		break
+	files_out.write(line)
+
+files_out.close()
+files_in.close()
+total_size = header_size + calculate_tar_size(files_size)
+print("Output: {} bytes".format(total_size), file=sys.stderr)
+
+t.join()

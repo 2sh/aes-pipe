@@ -19,12 +19,12 @@ If no key command is specified, the user is prompted for a passphrase.
 ```
 find /path/photos/ > filelist
 
-python3 encrypt.py -l filelist_rest_1 -s 25g filelist | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
-python3 encrypt.py -l filelist_rest_2 -s 25g filelist_rest_1 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
-python3 encrypt.py -l filelist_rest_3 -s 25g filelist_rest_2 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 encrypt.py -u -l filelist_rest_1 -s 25g filelist | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 encrypt.py -u -l filelist_rest_2 -s 25g filelist_rest_1 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 encrypt.py -u -l filelist_rest_3 -s 25g filelist_rest_2 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
 ...
 ```
-As the rest filelist is output before the file encryption starts, multiple
+As the rest filelist is output before the file encryption ends, multiple
 discs can be written at once.
 
 ### Encrypting files spanned across multiple usb sticks
