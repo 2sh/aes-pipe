@@ -78,6 +78,12 @@ class FilelistOutFile:
 	def __init__(self, path):
 		self.path = path
 		self.f = None
+		try:
+			open(self.path, "r").close()
+		except:
+			pass
+		else:
+			self.f = open(self.path, "w")
 	
 	def write(self, data):
 		if self.path:
