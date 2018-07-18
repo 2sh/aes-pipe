@@ -198,10 +198,10 @@ def encrypt_files():
 files_size = 0
 files_out = FilelistOutFile(args.filelist_out)
 
+files_in = open(filelist_source, "r")
+
 t = Thread(target=encrypt_files)
 t.start()
-
-files_in = open(filelist_source, "r")
 
 halt = False
 while 1:
