@@ -68,6 +68,26 @@ def calculate_tar_size(data_size, blocking_factor=20):
 	return int((blocking_factor*512) *
 		math.ceil((data_size + 512*2)/(blocking_factor*512)))
 
+def _file_iter_lines(input_file, delimiter, size):
+	partial_line = ""
+	while True:
+		chars = input_file.read(size)
+		if not chars:
+			break
+		partial_line += chars
+		lines = partial_line.split(delimiter)
+		partial_line = lines.pop()
+		for line in lines:
+			yield line + delimiter
+	if partial_line:
+		yield partial_line
+
+def file_iter_lines(input_file, delimiter="\n", size=8192):
+	if delimiter == "\n":
+		return input_file
+	else:
+		return _file_iter_lines(input_file, delimiter, size)
+
 class FilelistOutFile:
 	def __init__(self, path):
 		self.path = path
@@ -151,13 +171,21 @@ parser.add_argument("-k",
 	type=lambda x: int(x)//8,
 	default=32,
 	help="The AES key size in bits: 128, 192 or 256 [Default: 256].")
-
+parser.add_argument("-0",
+	dest="null_delimiter",
+	action="store_true",
+	help="Read and write null (\\0) delimitered filelists.")
 args = parser.parse_args()
 
 if args.filelist == "-":
 	filelist_source = sys.stdin.fileno()
 else:
 	filelist_source = args.filelist
+
+if args.null_delimiter:
+	delimiter = "\0"
+else:
+	delimiter = "\n"
 
 iv = get_random_bytes(8)
 
@@ -196,6 +224,7 @@ paths_to_write = Queue()
 files_size = 0
 
 files_in = open(filelist_source, "r")
+files_in_reader = file_iter_lines(files_in, delimiter)
 files_out = FilelistOutFile(args.filelist_out)
 
 sys.stdout.buffer.write(header)
@@ -223,16 +252,16 @@ encrypt_thread.start()
 i = 0
 halt = False
 while 1:
-	path = files_in.readline()
+	path = next(files_in_reader, None)
 	if not path:
 		break
-	path = path.rstrip("\n")
+	path = path.rstrip(delimiter)
 	if not path:
 		continue
 	try:
 		f = calculate_tar_file_size(path)
 	except Exception as e:
-		files_out.write(f[0])
+		files_out.write(path + delimiter)
 		print(e, file=sys.stderr)
 		continue
 	
@@ -241,9 +270,9 @@ while 1:
 	
 	if(halt or (max_tar_size and
 			calculate_tar_size(files_size + f[1]) > max_tar_size)):
-		files_out.write(f[0] + "\n")
+		files_out.write(path + delimiter)
 	else:
-		paths_to_write.put(f[0])
+		paths_to_write.put(path)
 		files_size += f[1]
 	
 	if halt:
@@ -253,7 +282,7 @@ while 1:
 paths_to_write.put(None)
 
 while 1:
-	line = files_in.readline()
+	line = next(files_in_reader, None)
 	if not line:
 		break
 	files_out.write(line)
