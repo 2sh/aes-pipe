@@ -62,7 +62,7 @@ parser.add_argument("-k",
 	dest="key_size",
 	metavar="SIZE",
 	type=lambda x: int(x)//8,
-	default=256,
+	default=32,
 	help="The AES key size in bits: 128, 192 and 256 [Default: 256].")
 parser.add_argument("-p",
 	dest="pass_header",
