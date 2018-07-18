@@ -69,10 +69,7 @@ def calculate_tar_size(data_size, blocking_factor=20):
 		math.ceil((data_size + 512*2)/(blocking_factor*512)))
 
 def passphrase_to_key(passphrase):
-	return hashlib.sha256(passphrase.encode('utf-8')).digest()
-
-def create_random_key():
-	return get_random_bytes(32)
+	return hashlib.sha256(passphrase.encode("utf-8")).digest()
 
 class FilelistOutFile:
 	def __init__(self, path):
@@ -136,13 +133,13 @@ parser.add_argument("-s",
 	help="The size of the destination storage.")
 parser.add_argument("-u",
 	dest="no_underrun",
-	action='store_true',
+	action="store_true",
 	help="Attempt to prevent a buffer underrun. If the buffer is empty, "
 		"the output is halted and the paths of any remaining files "
 		"are written to the out file list.")
 parser.add_argument("-f",
 	dest="fill",
-	action='store_true',
+	action="store_true",
 	help="Fill any remaining space on the destination storage "
 		"with random bytes.")
 parser.add_argument("-k",
@@ -161,7 +158,7 @@ else:
 
 header = b""
 if args.key_command:
-	key = create_random_key()
+	key = get_random_bytes(32)
 	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE)
 	data, _ = sp.communicate(key)
 	if sp.returncode != 0:
