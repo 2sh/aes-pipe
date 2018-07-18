@@ -57,11 +57,11 @@ def calculate_tar_file_size(path):
 		file_size = os.path.getsize(path)
 		# 512 byte header + data rounded up to a multiple of 512 bytes
 		size += 512 + 512 * int(math.ceil(file_size)/512)
-		return path, size, 0
+		return size
 	else:
 		# only the 512 byte header
 		size += 512
-		return path, size, 1
+		return size
 
 def calculate_tar_size(data_size, blocking_factor=20):
 	# End of archive marked by two consecutive zero-filled records
@@ -221,8 +221,6 @@ else:
 
 paths_to_write = Queue()
 
-files_size = 0
-
 files_in = open(filelist_source, "r")
 files_in_reader = file_iter_lines(files_in, delimiter)
 files_out = FilelistOutFile(args.filelist_out)
@@ -250,6 +248,7 @@ encrypt_thread = Thread(target=encrypt_files)
 encrypt_thread.start()
 
 i = 0
+files_size = 0
 halt = False
 while 1:
 	path = next(files_in_reader, None)
@@ -259,7 +258,7 @@ while 1:
 	if not path:
 		continue
 	try:
-		f = calculate_tar_file_size(path)
+		file_size = calculate_tar_file_size(path)
 	except Exception as e:
 		files_out.write(path + delimiter)
 		print(e, file=sys.stderr)
@@ -269,11 +268,11 @@ while 1:
 		halt = paths_to_write.empty()
 	
 	if(halt or (max_tar_size and
-			calculate_tar_size(files_size + f[1]) > max_tar_size)):
+			calculate_tar_size(files_size + file_size) > max_tar_size)):
 		files_out.write(path + delimiter)
 	else:
 		paths_to_write.put(path)
-		files_size += f[1]
+		files_size += file_size
 	
 	if halt:
 		break
