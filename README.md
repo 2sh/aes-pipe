@@ -9,7 +9,7 @@ for the next storage destination.
 Use the ```-h``` argument for help.
 
 ## Requirements
-* Python3
+* Python 3.4+
 * PyCrypto
 
 ## Usage Examples
