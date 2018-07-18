@@ -183,15 +183,14 @@ sys.stdout.buffer.write(header)
 paths_to_write = Queue()
 
 def encrypt_files():
-	path = paths_to_write.get()
 	encrypter = FileEncrypter(sys.stdout.buffer, key, iv)
 	tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8",
 		format=tarfile.GNU_FORMAT, bufsize=20*512)
 	while 1:
-		tar.add(path, recursive=False)
 		path = paths_to_write.get()
 		if not path:
 			break
+		tar.add(path, recursive=False)
 	tar.close()
 
 
@@ -200,9 +199,10 @@ files_out = FilelistOutFile(args.filelist_out)
 
 files_in = open(filelist_source, "r")
 
-t = Thread(target=encrypt_files)
-t.start()
+encrypt_thread = Thread(target=encrypt_files)
+encrypt_thread.start()
 
+i = 0
 halt = False
 while 1:
 	path = files_in.readline()
@@ -218,7 +218,7 @@ while 1:
 		print(e, file=sys.stderr)
 		continue
 	
-	if args.no_underrun:
+	if i > 10 and args.no_underrun:
 		halt = paths_to_write.empty()
 	
 	if(halt or (max_tar_size and
@@ -230,6 +230,7 @@ while 1:
 	
 	if halt:
 		break
+	i += 1
 
 paths_to_write.put(None)
 
@@ -244,4 +245,4 @@ files_in.close()
 total_size = header_size + calculate_tar_size(files_size)
 print("Output: {} bytes".format(total_size), file=sys.stderr)
 
-t.join()
+encrypt_thread.join()
