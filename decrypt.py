@@ -87,11 +87,14 @@ if args.key_command:
 	if sp.returncode != 0:
 		print(err.decode(encoding='UTF-8'), file=sys.stderr)
 		exit()
-else:
-	key = hashlib.sha256(getpass("Enter a passphrase: ").encode('utf-8')
-		).digest()[:args.key_size]
 
 iv = data_in.read(8)
+
+if not args.key_command:
+	key = hashlib.pbkdf2_hmac("sha256",
+		getpass("Enter a passphrase: ").encode("utf-8"),
+		iv, 1000000, args.key_size)
+
 decrypter = FileDecrypter(data_in, key, iv)
 
 if args.output_destination:

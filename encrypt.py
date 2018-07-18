@@ -159,6 +159,8 @@ if args.filelist == "-":
 else:
 	filelist_source = args.filelist
 
+iv = get_random_bytes(8)
+
 header = b""
 if args.key_command:
 	key = get_random_bytes(args.key_size)
@@ -177,9 +179,10 @@ else:
 		else:
 			print("The passphrases did not match. Try again.",
 				file=sys.stderr)
-	key = hashlib.sha256(passphrase.encode("utf-8")).digest()[:args.key_size]
+	key = hashlib.pbkdf2_hmac("sha256",
+		passphrase.encode("utf-8"),
+		iv, 1000000, args.key_size)
 
-iv = get_random_bytes(8)
 header += iv
 header_size = len(header)
 
