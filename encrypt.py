@@ -68,9 +68,6 @@ def calculate_tar_size(data_size, blocking_factor=20):
 	return int((blocking_factor*512) *
 		math.ceil((data_size + 512*2)/(blocking_factor*512)))
 
-def passphrase_to_key(passphrase):
-	return hashlib.sha256(passphrase.encode("utf-8")).digest()
-
 class FilelistOutFile:
 	def __init__(self, path):
 		self.path = path
@@ -142,12 +139,18 @@ parser.add_argument("-f",
 	action="store_true",
 	help="Fill any remaining space on the destination storage "
 		"with random bytes.")
-parser.add_argument("-k",
+parser.add_argument("-c",
 	dest="key_command",
 	metavar="COMMAND",
 	help="Generates a 32-byte encryption key and pipes it into "
 		"the specified command, e.g. gpg or dd. Otherwise, "
 		"a passphrase is requested through a prompt.")
+parser.add_argument("-k",
+	dest="key_size",
+	metavar="SIZE",
+	type=lambda x: int(x)//8,
+	default=256,
+	help="The AES key size in bits: 128, 192 and 256 [Default: 256].")
 
 args = parser.parse_args()
 
@@ -158,7 +161,7 @@ else:
 
 header = b""
 if args.key_command:
-	key = get_random_bytes(32)
+	key = get_random_bytes(args.key_size)
 	sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE)
 	data, _ = sp.communicate(key)
 	if sp.returncode != 0:
@@ -174,8 +177,7 @@ else:
 		else:
 			print("The passphrases did not match. Try again.",
 				file=sys.stderr)
-
-	key = passphrase_to_key(passphrase)
+	key = hashlib.sha256(passphrase.encode("utf-8")).digest()[:args.key_size]
 
 iv = get_random_bytes(8)
 header += iv

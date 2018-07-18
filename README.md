@@ -55,20 +55,20 @@ the unencrypted tar archive data is output to STDOUT.
 
 #### Prepend encrypted key to header of data output
 ```
-python3 encrypt.py -k "gpg --encrypt --recipient email@example.com" filelist > testfile
+python3 encrypt.py -c "gpg --encrypt --recipient email@example.com" filelist > testfile
 ```
 #### Use encrypted key in header of data
 ```
-python3 decrypt.py -p -k "gpg --decrypt" -i testfile -o /path/
+python3 decrypt.py -p -c "gpg --decrypt" -i testfile -o /path/
 ```
 This needs the ```-p``` argument.
 
 #### Output encrypted key file
 ```
-python3 encrypt.py -k "gpg --output encrypted_key.gpg --encrypt --recipient email@example.com" filelist > testfile
+python3 encrypt.py -c "gpg --output encrypted_key.gpg --encrypt --recipient email@example.com" filelist > testfile
 ```
 
 #### Use encrypted key file
 ```
-python3 decrypt.py -k "gpg --decrypt encrypted_key.gpg" -i testfile -o /path/
+python3 decrypt.py -c "gpg --decrypt encrypted_key.gpg" -i testfile -o /path/
 ```
