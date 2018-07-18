@@ -53,13 +53,17 @@ parser.add_argument("-o",
 	metavar="DEST_PATH",
 	help="Output destination of the decrypted files. "
 		"Default is to output a UTF-8 encoded TAR file to STDOUT.")
-
-parser.add_argument("-k",
+parser.add_argument("-c",
 	dest="key_command",
 	metavar="COMMAND",
 	help="The command to retrieve the encryption key, e.g. gpg. "
 		"Default is to prompt for a passphrase.")
-	
+parser.add_argument("-k",
+	dest="key_size",
+	metavar="SIZE",
+	type=lambda x: int(x)//8,
+	default=256,
+	help="The AES key size in bits: 128, 192 and 256 [Default: 256].")
 parser.add_argument("-p",
 	dest="pass_header",
 	action='store_true',
@@ -84,8 +88,8 @@ if args.key_command:
 		print(err.decode(encoding='UTF-8'), file=sys.stderr)
 		exit()
 else:
-	key = hashlib.sha256(
-		getpass("Enter a passphrase: ").encode('utf-8')).digest()
+	key = hashlib.sha256(getpass("Enter a passphrase: ").encode('utf-8')
+		).digest()[:args.key_size]
 
 iv = data_in.read(8)
 decrypter = FileDecrypter(data_in, key, iv)
