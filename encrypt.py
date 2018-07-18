@@ -133,13 +133,18 @@ parser.add_argument("-l",
 parser.add_argument("-s",
 	dest="size",
 	type=storage_size,
-	help="The size of the destination storage")
+	help="The size of the destination storage.")
 parser.add_argument("-u",
 	dest="no_underrun",
 	action='store_true',
 	help="Attempt to prevent a buffer underrun. If the buffer is empty, "
 		"the output is halted and the paths of any remaining files "
 		"are written to the out file list.")
+parser.add_argument("-f",
+	dest="fill",
+	action='store_true',
+	help="Fill any remaining space on the destination storage "
+		"with random bytes.")
 parser.add_argument("-k",
 	dest="key_command",
 	metavar="COMMAND",
@@ -184,9 +189,14 @@ if args.size:
 else:
 	max_tar_size = None
 
-sys.stdout.buffer.write(header)
-
 paths_to_write = Queue()
+
+files_size = 0
+
+files_in = open(filelist_source, "r")
+files_out = FilelistOutFile(args.filelist_out)
+
+sys.stdout.buffer.write(header)
 
 def encrypt_files():
 	encrypter = FileEncrypter(sys.stdout.buffer, key, iv)
@@ -198,12 +208,12 @@ def encrypt_files():
 			break
 		tar.add(path, recursive=False)
 	tar.close()
-
-
-files_size = 0
-files_out = FilelistOutFile(args.filelist_out)
-
-files_in = open(filelist_source, "r")
+	if args.fill:
+		try:
+			while 1:
+				encrypter.write(b"\0")
+		except:
+			pass
 
 encrypt_thread = Thread(target=encrypt_files)
 encrypt_thread.start()
