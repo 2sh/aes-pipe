@@ -121,7 +121,7 @@ _unit_prefixes = {
 	"y": 8,
 }
 
-def _storage_size(value):
+def _type_storage_size(value):
 	value = value.lower()
 	if not value:
 		raise Exception("Size not given.")
@@ -134,6 +134,9 @@ def _storage_size(value):
 		return int(float(value[:-1]) * 1000**_unit_prefixes[value[-1]])
 	else:
 		return int(value)
+
+def _type_key_size(value):
+	return int(value)//8
 
 def _convert_passphrase_to_key(passphrase, salt, length):
 	return hashlib.pbkdf2_hmac("sha256", passphrase.encode("utf-8"),
@@ -328,7 +331,7 @@ if __name__ == "__main__":
 			"fit within the size limit or failed.")
 	parser_encrypt.add_argument("-s",
 		dest="size",
-		type=_storage_size,
+		type=_type_storage_size,
 		help="The size of the destination storage.")
 	parser_encrypt.add_argument("-u",
 		dest="no_underrun",
@@ -350,8 +353,8 @@ if __name__ == "__main__":
 	parser_encrypt.add_argument("-k",
 		dest="key_size",
 		metavar="SIZE",
-		type=lambda x: int(x)//8,
-		default=32,
+		type=_type_key_size,
+		default=_type_key_size(256),
 		help="The AES key size in bits: 128, 192 or 256 [Default: 256].")
 	parser_encrypt.add_argument("-0",
 		dest="null_delimiter",
@@ -378,8 +381,8 @@ if __name__ == "__main__":
 	parser_decrypt.add_argument("-k",
 		dest="key_size",
 		metavar="SIZE",
-		type=lambda x: int(x)//8,
-		default=32,
+		type=_type_key_size,
+		default=_type_key_size(256),
 		help="The AES key size in bits: 128, 192 and 256 [Default: 256].")
 	parser_decrypt.add_argument("-p",
 		dest="pass_header",
