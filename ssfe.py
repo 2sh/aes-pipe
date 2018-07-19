@@ -22,16 +22,9 @@ import sys, os.path
 import tarfile
 import math
 
-import hashlib
-from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
-from subprocess import Popen, PIPE
-from getpass import getpass
-
-from queue import Queue
-from threading import Thread
 
 class FileEncrypter:
 	def __init__(self, out_fd, key, iv):
@@ -149,8 +142,16 @@ def _storage_size(value):
 	else:
 		return int(value)
 
+def _convert_passphrase_to_key(passphrase, salt, length):
+	return hashlib.pbkdf2_hmac("sha256", passphrase.encode("utf-8"),
+		salt, 1000000, length)
 
 def _encrypt(args):
+	from Crypto.Random import get_random_bytes
+
+	from queue import Queue
+	from threading import Thread
+	
 	if args.filelist == "-":
 		filelist_source = sys.stdin.fileno()
 	else:
@@ -181,9 +182,8 @@ def _encrypt(args):
 			else:
 				print("The passphrases did not match. Try again.",
 					file=sys.stderr)
-		key = hashlib.pbkdf2_hmac("sha256",
-			passphrase.encode("utf-8"),
-			iv, 1000000, args.key_size)
+		key = _convert_passphrase_to_key(
+			passphrase, iv, args.key_size)
 
 	header += iv
 	header_size = len(header)
@@ -289,9 +289,8 @@ def _decrypt(args):
 	iv = data_in.read(8)
 
 	if not args.key_command:
-		key = hashlib.pbkdf2_hmac("sha256",
-			getpass("Enter a passphrase: ").encode("utf-8"),
-			iv, 1000000, args.key_size)
+		key = _convert_passphrase_to_key(
+			getpass("Enter a passphrase: "), iv, args.key_size)
 
 	decrypter = FileDecrypter(data_in, key, iv)
 
@@ -315,11 +314,18 @@ def _decrypt(args):
 if __name__ == "__main__":
 	import argparse
 	
+	from subprocess import Popen, PIPE
+	from getpass import getpass
+	
+	import hashlib
+	
 	parser = argparse.ArgumentParser(description="SSFE")
 	subparsers = parser.add_subparsers(dest="mode", help="mode")
 	subparsers.required=True
 	
+	
 	parser_encrypt = subparsers.add_parser("encrypt")
+	
 	parser_encrypt.add_argument("filelist",
 		help="A list of all the individual files and folders to be encrypted.")
 	parser_encrypt.add_argument("-l",
@@ -361,6 +367,7 @@ if __name__ == "__main__":
 	
 	
 	parser_decrypt = subparsers.add_parser("decrypt")
+	
 	parser_decrypt.add_argument("-i",
 		dest="input_source",
 		metavar="SOURCE",
@@ -385,6 +392,7 @@ if __name__ == "__main__":
 		dest="pass_header",
 		action='store_true',
 		help="Set to pass header to key command")
+	
 	
 	args = parser.parse_args()
 	
