@@ -356,7 +356,7 @@ if __name__ == "__main__":
 	parser_encrypt.add_argument("-0",
 		dest="null_delimiter",
 		action="store_true",
-		help="Read and write null (\\0) delimitered filelists.")
+		help="Read and write null (\\0) delimited filelists.")
 	
 	
 	parser_decrypt = subparsers.add_parser("decrypt")
