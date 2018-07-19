@@ -26,24 +26,17 @@ from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
 
-class Encrypter:
-	def __init__(self, out_fd, key, iv):
-		self.out_fd = out_fd
-		ctr = Counter.new(64, prefix=iv)
-		self.encrypter = AES.new(key, AES.MODE_CTR, counter=ctr)
-
-	def write(self, data):
-		self.out_fd.write(self.encrypter.encrypt(data))
-
-class Decrypter:
-	def __init__(self, in_fd, key, iv):
-		self.in_fd = in_fd
-		
+class FileEncryption:
+	def __init__(self, fd, key, iv):
+		self.fd = fd
 		ctr = Counter.new(64, prefix=iv)
 		self.cipher = AES.new(key, AES.MODE_CTR, counter=ctr)
-
+	
+	def write(self, data):
+		self.fd.write(self.cipher.encrypt(data))
+	
 	def read(self, bufsize=20*512):
-		data = self.in_fd.read(bufsize)
+		data = self.fd.read(bufsize)
 		if data:
 			return self.cipher.decrypt(data)
 		else:
@@ -202,8 +195,8 @@ def _encrypt(args):
 	sys.stdout.buffer.write(header)
 	
 	def _encrypt_files():
-		encrypter = Encrypter(sys.stdout.buffer, key, iv)
-		tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8",
+		encryption = FileEncryption(sys.stdout.buffer, key, iv)
+		tar = tarfile.open(mode="w|", fileobj=encryption, encoding="utf-8",
 			format=tarfile.GNU_FORMAT, bufsize=20*512)
 		while 1:
 			path = paths_to_write.get()
@@ -214,7 +207,7 @@ def _encrypt(args):
 		if args.fill:
 			try:
 				while 1:
-					encrypter.write(b"\0")
+					encryption.write(b"\0")
 			except:
 				pass
 	
@@ -292,15 +285,15 @@ def _decrypt(args):
 		key = _convert_passphrase_to_key(
 			getpass("Enter a passphrase: "), iv, args.key_size)
 	
-	decrypter = Decrypter(data_in, key, iv)
+	encryption = FileEncryption(data_in, key, iv)
 	
 	if args.output_destination:
-		tar = tarfile.open(mode="r|", fileobj=decrypter, encoding="utf-8",
+		tar = tarfile.open(mode="r|", fileobj=encryption, encoding="utf-8",
 			format=tarfile.GNU_FORMAT, bufsize=20*512)
 		tar.extractall(args.output_destination)
 	else:
 		while True:
-			data = decrypter.read()
+			data = encryption.read()
 			if not data:
 				break
 			sys.stdout.buffer.write(data)
