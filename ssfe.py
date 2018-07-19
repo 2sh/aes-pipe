@@ -46,21 +46,20 @@ def determine_tar_file_size(path):
 	if not os.path.lexists(path):
 		raise Exception("{} does not exist".format(path))
 	
-	path_size = sys.getsizeof(path)
-	if path_size > 64: # GNU tar path size workaround
-		size = 512 + 512 * int(math.ceil(path_size/512))
-	else:
-		size = 0
+	# 512 byte header
+	size = 512
+	
+	# GNU tar path string size workaround
+	path_size = len(path.encode("utf-8"))
+	if path_size > 100:
+		# @LongLink header + path string fit within blocks of 512 bytes
+		size += 512 + 512 * int(math.ceil(path_size/512))
 
 	if os.path.isfile(path):
 		file_size = os.path.getsize(path)
-		# 512 byte header + data rounded up to a multiple of 512 bytes
-		size += 512 + 512 * int(math.ceil(file_size)/512)
-		return size
-	else:
-		# only the 512 byte header
-		size += 512
-		return size
+		# file data fit within blocks of 512 bytes
+		size += 512 * int(math.ceil(file_size)/512)
+	return size
 
 def determine_tar_size(data_size, blocking_factor=20):
 	# End of archive marked by two consecutive zero-filled records
