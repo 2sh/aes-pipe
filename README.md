@@ -6,7 +6,11 @@ the first storage destination. Before the encryption, the script determines
 which files it is able to fit onto the destination and outputs a list of files
 for the next storage destination.
 
-Use the ```-h``` argument for help.
+Use the ```-h``` argument for help:
+```
+python3 ssfe.py encrypt -h
+python3 ssfe.py decrypt -h
+```
 
 ## Requirements
 * Python 3.4+
@@ -19,9 +23,9 @@ If no key command is specified, the user is prompted for a passphrase.
 ```
 find /path/photos/ > filelist
 
-python3 encrypt.py -u -l filelist_rest_1 -s 25g filelist | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
-python3 encrypt.py -u -l filelist_rest_2 -s 25g filelist_rest_1 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
-python3 encrypt.py -u -l filelist_rest_3 -s 25g filelist_rest_2 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 ssfe.py encrypt -u -l filelist_rest_1 -s 25g filelist | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 ssfe.py encrypt -u -l filelist_rest_2 -s 25g filelist_rest_1 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
+python3 ssfe.py encrypt -u -l filelist_rest_3 -s 25g filelist_rest_2 | cdrskin -v driveropts=burnfree -tao dev=/dev/sr0 -
 ...
 ```
 As the rest filelist is output before the file encryption ends, multiple
@@ -29,7 +33,7 @@ discs can be written at once.
 
 ### Encrypting files spanned across multiple usb sticks
 ```
-python3 encrypt.py -l filelist_rest_1 -s 16g filelist > /dev/sdX
+python3 ssfe.py encrypt -l filelist_rest_1 -s 16g filelist > /dev/sdX
 ...
 ```
 
@@ -37,7 +41,7 @@ python3 encrypt.py -l filelist_rest_1 -s 16g filelist > /dev/sdX
 Using the Blu-Ray discs created in the example above, the following line can be
 run for each disc.
 ```
-python3 decrypt.py -i /dev/sr0 -o /
+python3 ssfe.py decrypt -i /dev/sr0 -o /
 ```
 Files will be output with their original paths.
 
@@ -46,7 +50,7 @@ This is useful for recovering deleted items from a backup.
 Until the items are found, this will need to be run on each storage area
 across which the encrypted data was spanned.
 ```
-python3 decrypt.py -i /dev/sdX | tar -C path/to/output/dir/ -xf - "path/of/dir in archive/" path/of/a_file.png
+python3 ssfe.py decrypt -i /dev/sdX | tar -C path/to/output/dir/ -xf - "path/of/dir in archive/" path/of/a_file.png
 ```
 Without the ```-o``` argument,
 the unencrypted tar archive data is output to STDOUT.
@@ -55,20 +59,20 @@ the unencrypted tar archive data is output to STDOUT.
 
 #### Prepend encrypted key to header of data output
 ```
-python3 encrypt.py -c "gpg --encrypt --recipient email@example.com" filelist > testfile
+python3 ssfe.py encrypt -c "gpg --encrypt --recipient email@example.com" filelist > testfile
 ```
 #### Use encrypted key in header of data
 ```
-python3 decrypt.py -p -c "gpg --decrypt" -i testfile -o /path/
+python3 ssfe.py decrypt -p -c "gpg --decrypt" -i testfile -o /path/
 ```
 This needs the ```-p``` argument.
 
 #### Output encrypted key file
 ```
-python3 encrypt.py -c "gpg --output encrypted_key.gpg --encrypt --recipient email@example.com" filelist > testfile
+python3 ssfe.py encrypt -c "gpg --output encrypted_key.gpg --encrypt --recipient email@example.com" filelist > testfile
 ```
 
 #### Use encrypted key file
 ```
-python3 decrypt.py -c "gpg --decrypt encrypted_key.gpg" -i testfile -o /path/
+python3 ssfe.py decrypt -c "gpg --decrypt encrypted_key.gpg" -i testfile -o /path/
 ```
