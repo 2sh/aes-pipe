@@ -26,7 +26,7 @@ from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
 
-class FileEncrypter:
+class Encrypter:
 	def __init__(self, out_fd, key, iv):
 		self.out_fd = out_fd
 		ctr = Counter.new(64, prefix=iv)
@@ -35,7 +35,7 @@ class FileEncrypter:
 	def write(self, data):
 		self.out_fd.write(self.encrypter.encrypt(data))
 
-class FileDecrypter:
+class Decrypter:
 	def __init__(self, in_fd, key, iv):
 		self.in_fd = in_fd
 		
@@ -148,7 +148,7 @@ def _convert_passphrase_to_key(passphrase, salt, length):
 
 def _encrypt(args):
 	from Crypto.Random import get_random_bytes
-
+	
 	from queue import Queue
 	from threading import Thread
 	
@@ -156,14 +156,14 @@ def _encrypt(args):
 		filelist_source = sys.stdin.fileno()
 	else:
 		filelist_source = args.filelist
-
+	
 	if args.null_delimiter:
 		delimiter = "\0"
 	else:
 		delimiter = "\n"
-
+	
 	iv = get_random_bytes(8)
-
+	
 	header = b""
 	if args.key_command:
 		key = get_random_bytes(args.key_size)
@@ -184,25 +184,25 @@ def _encrypt(args):
 					file=sys.stderr)
 		key = _convert_passphrase_to_key(
 			passphrase, iv, args.key_size)
-
+	
 	header += iv
 	header_size = len(header)
-
+	
 	if args.size:
 		max_tar_size = args.size-header_size
 	else:
 		max_tar_size = None
-
+	
 	paths_to_write = Queue()
-
+	
 	files_in = open(filelist_source, "r")
 	files_in_reader = _file_iter_lines(files_in, delimiter)
 	files_out = _FilelistOutFile(args.filelist_out)
-
+	
 	sys.stdout.buffer.write(header)
-
+	
 	def _encrypt_files():
-		encrypter = FileEncrypter(sys.stdout.buffer, key, iv)
+		encrypter = Encrypter(sys.stdout.buffer, key, iv)
 		tar = tarfile.open(mode="w|", fileobj=encrypter, encoding="utf-8",
 			format=tarfile.GNU_FORMAT, bufsize=20*512)
 		while 1:
@@ -217,10 +217,10 @@ def _encrypt(args):
 					encrypter.write(b"\0")
 			except:
 				pass
-
+	
 	encrypt_thread = Thread(target=_encrypt_files)
 	encrypt_thread.start()
-
+	
 	i = 0
 	files_size = 0
 	halt = False
@@ -251,20 +251,20 @@ def _encrypt(args):
 		if halt:
 			break
 		i += 1
-
+	
 	paths_to_write.put(None)
-
+	
 	while 1:
 		line = next(files_in_reader, None)
 		if not line:
 			break
 		files_out.write(line)
-
+	
 	files_out.close()
 	files_in.close()
 	total_size = header_size + determine_tar_size(files_size)
 	print("Output: {} bytes".format(total_size), file=sys.stderr)
-
+	
 	encrypt_thread.join()
 
 def _decrypt(args):
@@ -272,7 +272,7 @@ def _decrypt(args):
 		data_in = open(args.input_source, "rb")
 	else:
 		data_in = sys.stdin.buffer
-
+	
 	if args.key_command:
 		if args.pass_header:
 			length = int.from_bytes(data_in.read(8), "big")
@@ -285,15 +285,15 @@ def _decrypt(args):
 		if sp.returncode != 0:
 			print(err.decode(encoding='UTF-8'), file=sys.stderr)
 			exit()
-
+	
 	iv = data_in.read(8)
-
+	
 	if not args.key_command:
 		key = _convert_passphrase_to_key(
 			getpass("Enter a passphrase: "), iv, args.key_size)
-
-	decrypter = FileDecrypter(data_in, key, iv)
-
+	
+	decrypter = Decrypter(data_in, key, iv)
+	
 	if args.output_destination:
 		tar = tarfile.open(mode="r|", fileobj=decrypter, encoding="utf-8",
 			format=tarfile.GNU_FORMAT, bufsize=20*512)
@@ -304,7 +304,7 @@ def _decrypt(args):
 			if not data:
 				break
 			sys.stdout.buffer.write(data)
-
+	
 	if args.input_source:
 		data_in.close()
 	if args.output_destination:
