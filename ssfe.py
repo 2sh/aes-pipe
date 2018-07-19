@@ -275,11 +275,9 @@ def _decrypt(args):
 			header_content = data_in.read(length)
 		else:
 			header_content = None
-		sp = Popen(args.key_command, shell=True,
-			stdin=PIPE, stdout=PIPE, stderr=PIPE)
-		key, err = sp.communicate(input=header_content)
+		sp = Popen(args.key_command, shell=True, stdin=PIPE, stdout=PIPE)
+		key, _ = sp.communicate(input=header_content)
 		if sp.returncode != 0:
-			print(err.decode(encoding='UTF-8'), file=sys.stderr)
 			exit()
 	
 	iv = data_in.read(8)
