@@ -63,5 +63,5 @@ data size is the same as the input data size.
 
 #### Use encrypted key file
 ```
-cat encrypted_tar | python3 python3 aes-pipe.py -d -c "gpg --decrypt encrypted_key.gpg" > something.tar
+cat encrypted_tar | python3 aes-pipe.py -d -c "gpg --decrypt encrypted_key.gpg" > something.tar
 ```
