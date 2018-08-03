@@ -7,7 +7,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
 	name="aes-pipe",
-	version="1.0.0",
+	version="1.0.1",
 	
 	author="2sh",
 	author_email="contact@2sh.me",
@@ -20,12 +20,13 @@ setuptools.setup(
 	
 	packages=["aes_pipe"],
 	
-	python_requires='>=3.4',
+	install_requires=["pycrypto"],
+	python_requires='>=3.0',
 	classifiers=(
 		"Programming Language :: Python :: 3",
 		"License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 		"Operating System :: OS Independent",
-		"Topic :: System :: Archiving"
+		"Topic :: Security :: Cryptography"
 	),
 	
 	entry_points={"console_scripts":["aes-pipe=aes_pipe:_main"]}
