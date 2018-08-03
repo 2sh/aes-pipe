@@ -5,7 +5,7 @@ data encryption using pipes to remove the need for temporarily storing the
 potentially large archives and encrypted data.
 
 ## Requirements
-* Python 3
+* Python 3.4+
 * PyCrypto
 
 ## Installation
