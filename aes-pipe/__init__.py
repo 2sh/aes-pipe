@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #
-#	aes-pipe.py
+#	aes-pipe - Encrypting piped data with AES
+#
 #	Copyright (C) 2018 2sh <contact@2sh.me>
 #
 #	This program is free software: you can redistribute it and/or modify
@@ -19,6 +20,7 @@
 
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
+
 
 class FileEncryption:
 	def __init__(self, fd, mode, key, nonce):
@@ -53,7 +55,7 @@ def _convert_passphrase_to_key(passphrase, salt, length):
 	return pbkdf2_hmac("sha256", passphrase.encode("utf-8"),
 		salt, 1000000, length)
 
-if __name__ == "__main__":
+def _main():
 	import argparse
 	import sys
 	
@@ -158,3 +160,6 @@ if __name__ == "__main__":
 			if not data:
 				break
 			sys.stdout.buffer.write(data)
+
+if __name__ == "__main__":
+	_main()
