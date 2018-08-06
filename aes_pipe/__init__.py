@@ -161,6 +161,3 @@ def _main():
 			if not data:
 				break
 			sys.stdout.buffer.write(data)
-
-if __name__ == "__main__":
-	_main()
